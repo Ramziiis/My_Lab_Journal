@@ -1,0 +1,75 @@
+---
+title: "Tutorial antibiotic profile"
+author: "Ramzi Guerbaa"
+date: "2022-12-12"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Context
+I needed to find a way to get the antibiotic resistance profile of some strains depending on the results of antibiotic susceptibility testing. The results were transcripted in a binary dataframe with binary values ( 1 = Resistant AND 0 = Sensitive) 
+
+## importing the table
+Here my data is a dataframe of antibiotic resistance phenotype with binary values, with 1 for resistant strains and 0 for sensitive strains. The path depends on your environment.
+```{r}
+data <- read.csv("/Users/User/OneDrive - Université Laval/OMICS/Paillasse/Antibiogramme.csv")
+data
+```
+
+## Converting NA to zeros
+NA values are problematic when we deal with data.frames in R. For my case, I have some strains for which the antibiogram has not been done yet, so Im just going to replace the NA values (No assigned value) by zeros as following.
+
+```{r}
+data[is.na(data)] <- 0   # replace all NA with 0
+data
+```
+
+## Changing rownames
+Here my rownames are numerical. It will be more relevant to change the rownames as the strains names
+
+```{r}
+rownames(data)<-data$X
+data
+```
+
+## Declaring an empty dataframe
+I declare an empty dataframe that i will fill line by line with a for loop in the next steps
+
+```{r}
+return_final<-data.frame()
+```
+
+## For loop to read into matrix and then fill a new table with the resistance profile 
+The following lines will :
+1) Read the table line by line with a first for loop. each line (strain) will be assigned to a temporary table "tmp".
+2) Subset only the columns (antibiotics) that have a value equal to 1 (resistant phenotype) and assign it to another temporary table "tmp1".
+3) Declare an empty string vector here called "profile".
+4) Fill the empty vector with the column names of the table "tmp1" that contains only column names of antibiotics to which a strain is resistant.
+5) Fill a temporary table with the results.
+6) Bind all the temporary tables into a final results table
+
+```{r}
+for (i in row.names(data)) {        
+  tmp<-data[c(i),]
+  tmp1 <- subset(tmp, select = c(tmp==1))
+  nbr<- length(tmp1)
+  profile<-as.character(" ")
+  for (j in colnames(tmp1)){
+    profile<- paste0(profile,"/", j)
+  }
+  return_tmp <- data.frame("Strain" = i, "profile" = profile, "Resistant to" = nbr, stringsAsFactors = F)
+  return_final<-rbind(return_final, return_tmp)
+}
+return_final
+```
+
+## Save the results table in a csv format 
+Adapt to your environment
+
+```{r, eval= FALSE}
+write.csv(return_final, file = "/Users/User/OneDrive - Université Laval/OMICS/Paillasse/Antibiogramme_profile.csv" )
+```
