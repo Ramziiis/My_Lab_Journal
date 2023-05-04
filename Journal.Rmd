@@ -14,115 +14,313 @@ output:
 knitr::opts_chunk$set(message=FALSE,warning=FALSE, cache=TRUE)
 ```
 
-IMPORTANT: You can delete everything in here and start fresh. You might want to start by not deleting anything above this line until you know what that stuff is doing.
+This is my lab Journal, Here I've wrote some R scripts that I used for the analysis of my data during my research, I hope You will find this Usefull. The problems and tasks may not be in a chronological order so feel free to surf the whole page in order to find what you're looking for !
 
+Last compiled: `r Sys.Date()`
 
-This is an .Rmd file. It is plain text with special features. Any time you write just like this, it will be compiled to normal text in the website. If you put a \# in front of your text, it will create a top level-header.
+# Heatmap for Antimicrobial activity
 
-# My first post
+### Loading the necessary packages
 
-2018 | 7 | 23 Last compiled: `r Sys.Date()`
-
-Notice that whatever you define as a top level header, automatically gets put into the table of contents bar on the left. 
-
-## Second level header
-
-You can add more headers by adding more hashtags. These won't be put into the table of contents
-
-### third level header
-
-Here's an even lower level header
-
-# My second post (note the order)
-
-2018 | 7 | 23 Last compiled: `r Sys.Date()`
-
-I'm writing this tutorial going from the top down. And, this is how it will be printed. So, notice the second post is second in the list. If you want your most recent post to be at the top, then make a new post starting at the top. If you want the oldest first, do, then keep adding to the bottom
-
-# Adding R stuff
-
-So far this is just a blog where you can write in plain text and serve your writing to a webpage. One of the main purposes of this lab journal is to record your progress learning R. The reason I am asking you to use this process is because you can both make a website, and a lab journal, and learn R all in R-studio. This makes everything really convenient and in the sam place. 
-
-So, let's say you are learning how to make a histogram in R. For example, maybe you want to sample 100 numbers from a normal distribution with mean = 0, and standard deviation =1, and then you want to plot a histogram. You can do this right here by using an r code block, like this:
+I will need the following packages to do most of the tasks
 
 ```{r}
-samples <- rnorm(100, mean=0, sd=1)
-hist(samples)
+library(reshape)
+library(psych)
+library(dplyr)
+library(data.table)
+library(ggplot2)
+library(RSelenium)
+library(ggplot2)
 ```
 
-When you knit this R Markdown document, you will see that the histogram is printed to the page, along with the R code. This document can be set up to hide the R code in the webpage, just delete the comment (hashtag), from the cold folding option in the yaml header up top. For purposes of letting yourself see the code, and me see the code, best to keep it the way that it is. You learn all of these things and more can be customized in each R code block.
+### Defining our Data
 
-# The big idea
-
-Use this lab journal to record what you do in R. This way I will be able to see what you are doing and help you along the way. You will also be creating a repository of all the things you do. You can make posts about everything. Learning specific things in R (project unrelated), and doing things for the project that we will discuss at the beginning of the Fall semester. You can get started now by fiddling around with googling things, and trying stuff out in R. I've placed some helpful starting links in the links page on this website
-
-# What can you do right now by yourself?
-
-It's hard to learn programming when you don't have specific problems that you are trying to solve. Everything just seems abstract.
-
-I wrote an [introductory programming book that introduces R](https://crumplab.github.io/programmingforpsych/), and gives some [concrete problems for you to solve](https://crumplab.github.io/programmingforpsych/programming-challenges-i-learning-the-fundamentals.html). 
-
-To get the hang of journaling and solving the problems to learn programming, my suggestion is that you use this .Rmd file to solve the problems. It would look like this:
-
-# Problem 1
-
-Do simple math with numbers, addition, subtraction, multiplication, division
+Here we could also have used the function read.csv or the "clipr" packages to paste the table into R. The dataframe represents the results of Antimicrobial activity testing of 39 bacterial isolates against five indicator strains.
 
 ```{r}
-1+2
-2*5
-5/3
-(1+6+4)/5
-
+tab <- data.frame("ATCC 25922" = c(1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), "ATCC 6269" = c(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), "E.coli 405" = c(NA, NA, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, NA, NA, 1, 0, 0, 0, 0, 0, NA, NA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NA), "E.coli BC36" = c(NA, NA, NA, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, NA, NA, 1, 0, 0, 0, 0, 0, NA, NA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NA), "MC4100" = c(NA, 1, 0, 1, 1, 0, 0, NA, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, NA, 0, 0, 0, NA, NA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NA))
+rownames(tab) <- c("1288", "32", "108", "15", "443", "645", "478", "758", "1082", "685", "858", "945", "ET135", "1068", "ET87", "940", "ET172", "199", "966", "680", "942", "854", "756", "123", "207", "ET124", "457", "357", "ET176", "445", "105", "43", "629", "257", "1079", "668", "480", "860", "746")
 ```
 
-# Problem 2
+### Reformat table
 
-Put numbers into variables, do simple math on the variables
+Here we reformat the table in a way that could be used by ggplot package
 
 ```{r}
-a<-1
-b<-2
-a+b
-
-d<-c(1,2,3)
-e<-c(5,6,7)
-d+e
-d*e
-d/e
-
+tab_t <- data.table::transpose(tab)
+rownames(tab_t) <- colnames(tab)
+colnames(tab_t) <- rownames(tab)
+tab_t$indicator <- rownames(tab_t)
+tab_tm <- melt(tab_t, id = 'indicator')
+colnames(tab_tm) <- c("indicator", "strain", "value")
 ```
 
-# Problem 3
+### Heatmap format 1
 
-Write code that will place the numbers 1 to 100 separately into a variable using for loop. Then, again using the seq function.
+Here we use the ggplot2 packages and geom_tile() to draw the heatmap. coord_fixed are usefull to have square tiles.
 
 ```{r}
-# for loop solution
-# i becomes the number 1 to 100 at each step of the loop
+ggplot(tab_tm, aes(indicator, strain)) + geom_tile(aes(fill = factor(value)), colour = "black") + theme(legend.title=element_text(colour = "black", size = 12), axis.text.x = element_text(angle = 90, hjust=1, size=7)) + labs(title = " Activity from supernatants", fill='Activity') + scale_fill_manual(values=c("white", "black", "grey"), labels= c('Non active', 'Active', 'Not done')) +  coord_fixed()
+```
+
+### Heatmap format 2
+
+Here you will notice that the Y axis is reverted, in my case I prefer to have the strain 1288 on top of the Y axis so I just add another layer to invert it.
+
+```{r}
+ggplot(tab_tm, aes(indicator, strain)) + geom_tile(aes(fill = factor(value)), colour = "black") + theme(legend.title=element_text(colour = "black", size = 12), axis.text.x = element_text(angle = 90, hjust=1, size=7)) + labs(title = "  ", fill='Activity') + scale_fill_manual(values=c("white", "black", "grey"), labels= c('Non active', 'Active', 'Not done')) +  coord_fixed() +  scale_y_discrete(limits=rev)
+```
+
+# Heatmap Virulence
+
+### Loading the packages
+
+Load these packages first
+
+```{r}
+library(reshape)
+library(psych)
+library(dplyr)
+library(data.table)
+library(ggplot2)
+library(RSelenium)
+library(tidyverse)
+```
+
+### Import and reformat the Data
+
+Some Errors may Occur, check the class of your data while applying functions, some functions work only on dataframes and some work only on objects of class matrix.
+
+```{r}
+dfv <- read.csv(file = "C:/Users/User/OneDrive - Université Laval/OMICS/Virulence_Analysis/EC41_Virulence_factors__presence_absence.csv")
+rownames(dfv) <- dfv[,1] # assign the strains names to the rownames
+dfv <- subset (dfv, select = -X) # Remove the column "-X" containing the strains names
+dfv_t <- t(dfv) #transpose
+rownames(dfv_t) <- colnames(dfv)
+colnames(dfv_t) <- rownames(dfv)
+dfv_t <- as.data.frame(dfv_t) %>% select("1288_S1", "32_S2", "108_S3", "15_S4", "443_S5", "645_S6", "478_S7", "758_S8", "1082_S9", "685_S10", "858_S11", "945_S12", "ET135_S13", "1068_S14", "ET87_S15", "940_S16", "ET172_S17", "199_S18", "966_S19", "680_S20", "942_S21", "854_S22", "756_S23", "123_S24", "207_S25", "ET124_S26", "457_S27", "357_S28", "ET176_S29", "445_S30", "105_S31", "43_S32", "629_S33", "257_S34", "1079_S35", "668_S36", "480_S37", "860_S38", "746_S39",  "BC36_S40", "Kp405_S41")   # reorder the data in that order
+dfv_t$FV <- row.names(dfv_t)
+dfv_tm <- melt(dfv_t)        				   #Reshape package
+colnames(dfv_tm) <- c("FV","Strain","value")
+```
+
+### Draw the Plot
+
+```{r}
+preferred.order <- c("1288_S1", "32_S2", "108_S3", "15_S4", "443_S5", "645_S6", "478_S7", "758_S8", "1082_S9", "685_S10", "858_S11", "945_S12", "ET135_S13", "1068_S14", "ET87_S15", "940_S16", "ET172_S17", "199_S18", "966_S19", "680_S20", "942_S21", "854_S22", "756_S23", "123_S24", "207_S25", "ET124_S26", "457_S27", "357_S28", "ET176_S29", "445_S30", "105_S31", "43_S32", "629_S33", "257_S34", "1079_S35", "668_S36", "480_S37", "860_S38", "746_S39",  "BC36_S40", "Kp405_S41")
+ggplot(dfv_tm, aes(x=FV, y= factor(Strain, levels = preferred.order))) + geom_tile(aes(fill = factor(value)), colour = "white") + theme(legend.title=element_text(colour = "black", size = 12), axis.text.x = element_text(angle = 90, hjust=1, size=6)) + labs(title="Virulome", size = 15) + labs(x="Virulence factor",y="Strain") + labs(fill='Genotype') + scale_fill_manual(values=c("white", "black"), labels= c('Absence', 'Presence')) +  scale_y_discrete(limits=rev) 
+```
+
+### Description of the table
+
+Get some stats such
+
+```{r}
+#describe(dfv)
+descri <- describe(dfv)
+moyenne <- subset (descri, select = "mean")
+moyenne$FV <- row.names(moyenne)
+view(moyenne)
+```
+
+### Reorder Virulence Factors By Means
+
+```{r}
+moyenne <- moyenne[order(moyenne$mean), ]
+good.order<-moyenne$FV
+ggplot(moyenne, aes(x = factor(FV, levels = good.order), mean)) + geom_col() 
+```
+
+# Resistance Phenotype
+
+Our goal here is to visualize the resistance phenotype of the strains of our collections by assigninging the colour [red]{style="color:red"} to resistant strains and [green]{style="color:green"} to sensitive ones.
+
+We could also assign a colour for the intermediate resistance profile, but it wont be the case here
+
+### Import Data
+
+```{r}
+All_df <- read.csv(file = "C:/Users/User/OneDrive - Université Laval/OMICS/Paillasse/All_Data - Copy.csv") # This file contains most of the genomic data 
+which(colnames(All_df) == "AM") # 306 
+which(colnames(All_df) == "Col") #322
+df<- subset(All_df, select = c(306:322)) # I took only the columns related the antibiotic resistance profile
+rownames(df) <- All_df$gene # giving my rows relevant names
+df_t <- t(df) # transpose my table
+rownames(df_t) <- colnames(df) 
+colnames(df_t) <- rownames(df)
+
+df_t <- as.data.frame(df_t) %>% select("1288_S1", "32_S2", "108_S3", "15_S4", "443_S5", "645_S6", "478_S7", "758_S8", "1082_S9", "685_S10", "858_S11", "945_S12", "ET135_S13", "1068_S14", "ET87_S15", "940_S16", "ET172_S17", "199_S18", "966_S19", "680_S20", "942_S21", "854_S22", "756_S23", "123_S24", "207_S25", "ET124_S26", "457_S27", "357_S28", "ET176_S29", "445_S30", "105_S31", "43_S32", "629_S33", "257_S34", "1079_S35", "668_S36", "480_S37", "860_S38", "746_S39") # reorder my columns in that order
+df_t<- df_t[colSums(!is.na(df_t)) > 0]  # remove columns that have NA in it
+df_t$ATB <- row.names(df_t) # creating "ATB" column, necessary for the melt() to work
+df_tm <- melt(df_t)        				   #Reshape package
+colnames(df_tm) <- c("ATB","Strain","value") # giving relevant names to the melted table
+df_tm$ATB <- factor(df_tm$ATB, levels = c("AM", "AMC", "FEP", "CTX", "FOX", "CAZ", "ATM", "ETP", "CIP", "NA.", "SXT", "C", "TE", "GM", "K", "S", "Col"))
+ggplot(df_tm, aes(ATB, Strain)) + geom_tile(aes(fill = factor(value), colour = c("red","green",white) ), colour = "white") + theme(legend.title=element_text(colour = "black", size = 12), axis.text.x = element_text(angle = 45, hjust=1, size=8)) + labs(title="Antibiotic resistance Profile", size = 15) + labs(x="Antibiotic",y="strain") + labs(fill='Phenotype') + scale_fill_manual(values=c("green","red", "red"), labels= c('Sensitive', 'Resistant', 'Resistant'))
+```
+
+# Description for a table
+
+```{r}
+table <- describe(df)
+view(table)
+ggplot(table, aes(x=vars, y=mean)) + geom_bar(stat = 'identity')
+```
+
+#Mapping samples origins
+
+I want to show where my samples come from on a map
+
+### Load necessary packages
+
+```{r}
+library(leaflet)
+library(tmaptools)
+```
+
+### Preparing Data
+
+Im going to try to take GPS localisation of the samples. Try to give them different names according to the names in this server <https://nominatim.openstreetmap.org/>
+
+### Rendering the map
+
+```{r}
+simple<- data.frame("Samples"=preferred.order, ID= c("Nabeul", "ksour essef", "mellassine", "bou merdes", "sidi bou ali", "kemicha", "grombalia", "Gouvernorat Siliana", "Jandouba", "Gouvernorat Monastir", "Chela", "Sijoumi", "Sfax", "Mahres", "Stade Municipal Menzel Chaker", "El Habibia", "Manouba", "La Marsa", "تونس العاصمة" , "Municipalité De Beb Lakwes", "Bizerte", "Chela", "El Aouina", "mellassine", "Gouvernorat Béja", "Zaghouan", "Bir Ali Ben Khalifa", "Chela","Gouvernorat Mahdia", "Hayy Ibn Khaldun", "mellassine", "Délégation Ksour Essef", "تونس العاصمة", "Rue Ibn Charaf", "Intilaka", "Rue Touhami Amar", "Agareb", "Aïn Draham", "Rue Beb Jdid", NA, NA))
+cities<- simple$ID[1:39] # cut the names of the cities and remove the last values which are NAs
+query <- geocode_OSM(cities)
+m <- leaflet() %>%
+     addTiles(urlTemplate = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png") %>%    addMarkers(query$lon, query$lat, label = query$query,  icon = makeIcon(iconUrl ="https://fanblairfarm.co.uk/wp-content/uploads/2020/11/chicken-icon-2.png", iconWidth = 17, iconHeight= 17)) 
+```
+
+### Try this format
+
+```{r}
+m %>% addProviderTiles(providers$MtbMap) %>%
+  addProviderTiles(providers$Stamen.TonerLines,
+    options = providerTileOptions(opacity = 0.35)) %>%
+  addProviderTiles(providers$Stamen.TonerLabels)
+```
+
+### Best map until now
+
+```{r}
+#Red chicken Tile, the best one until now
+
+m <- leaflet() %>%
+    addTiles(urlTemplate = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png") %>%    addMarkers(query$lon, query$lat, label = query$query,  icon = makeIcon(iconUrl ="https://www.downloadclipart.net/large/chicken-png-transparent-image.png", iconWidth = 17, iconHeight= 17)) 
+
+m %>% addProviderTiles(providers$Stamen.TonerLite) #best map until now
+```
+
+# Make PCA for my data
+
+I will find this usefull to interprete my data, the thing is some of the vectors here were manually typed
+
+### Loading Libraries
+
+```{r}
+library(logisticPCA)
+library(ggplot2)
+```
+
+### Importing the Data and rendering the graph
+
+```{r}
+All_df <- read.csv(file = "C:/Users/User/OneDrive - Université Laval/OMICS/Paillasse/All_Data - Copy.csv") # This file contains most of the genomic data
+data<- subset(All_df, select = c(-gene))
+Activity <-c(rep("Active", 21), rep("Inactive", 18))
+
+data <- as.matrix(data) # with matrix you can have repetitive rownames
+rownames(data)<- Activity
+logsvd_model = logisticSVD(data, k = 2)
+logsvd_model
+
+logpca_cv = cv.lpca(data, ks = 2, ms = 1:10)
+plot(logpca_cv)
 
 
-a <- length(100) # make empty variable, set length to 100
-for (i in 1:100){
-  a[i] <-i #assigns the number in i, to the ith index of a
-}
+logpca_model = logisticPCA(data, k = 2, m = which.min(logpca_cv))
+plot(logsvd_model, type = "trace")
 
-print(a)
+Activity<- rownames(data)
+plot(logpca_model, type = "scores") + geom_point(aes(colour = Activity)) + 
+  ggtitle("Logistic PCA") + scale_colour_manual(values = c("blue", "red")) 
+  
+plot(logsvd_model, type = "scores") + geom_point(aes(colour = Activity)) +   ggtitle("Exponential Family PCA") + scale_colour_manual(values = c("blue", "red"))
 
-# for loop solution #2
-
-a<-c() #create empty variable using combine command
-for (i in 1:100){
-  a<-c(a,i) # keeps combining a with itself and the new number in i
-}
-print(a)
-
-# seq solution
-a <- seq(1,100,1) # look up help for seq using ?seq() in console
-print(a)
 
 ```
 
-# Replace this with problem 4
+### PCA coloration depending on the criteria of bacteriocin Production
 
-And keep going. Try to solve the problems with different scripts that provide the same solution. Good luck, Happy coding.
+Here we will use the same model, the coordinates of the population will stay in the same place no need to redo the calculation. However we will colour the strains depending on the criterium of bacteriocin production
+
+```{r}
+Mcc <- c("J25", "J25+C7+colV", "J25+colV", "J25", "J25+colV", "inactive", "inactive", "inactive", "colV", "inactive", "C7+colV", "colV", "inactive", "colV", "inactive", "colV", "colV", "inactive", "colV", "inactive", "inactive", "colV", rep("inactive", 5), rep("colV", 2), rep("inactive", 7), "colV", "inactive", "inactive")
+Mcc[Mcc=="inactive"] <- "Non-producer"
+Mcc[Mcc!="Non-producer"] <- "Bacteriocin producer"
+
+
+plot(logsvd_model, type = "scores") + geom_point(aes(colour = Mcc)) + 
+  ggtitle("Exponential Family PCA") + scale_colour_manual(values = c("green", "red"))
+
+plot(logpca_model, type = "scores") + geom_point(aes(colour = Mcc)) +   ggtitle("Logistic PCA") + scale_colour_manual(values = c("green", "red")) 
+```
+
+### PCA depending on the degree of Virulence
+
+Same thing but different colours depending on the pathotype.
+
+```{r}
+
+#Virulence<- dput(as.character(clipr::read_clip())) # very useful to copy paste a vector 
+
+Virulence<- c("APEC potential", "APEC", "APEC potential", "APEC potential", "APEC potential", "AFEC", "AFEC", "APEC", "APEC", "APEC potential", "APEC", "APEC potential", "APEC", "APEC", "APEC potential", "APEC", "APEC", "APEC potential", "APEC", "APEC potential", "APEC potential", "APEC", "APEC potential", "AFEC", "AFEC", "APEC", "AFEC", "APEC", "APEC", "AFEC", "AFEC", "AFEC", "AFEC", "AFEC", "AFEC", "AFEC",
+"APEC", "AFEC", "APEC potential")
+
+plot(logsvd_model, type = "scores") + geom_point(aes(colour = Virulence)) + 
+  ggtitle("Exponential Family PCA") + scale_colour_manual(values = c("green", "red", "purple"))
+
+plot(logpca_model, type = "scores") + geom_point(aes(colour = Virulence)) + 
+  ggtitle("Logistic PCA") + scale_colour_manual(values = c("green", "red", "purple")) 
+```
+
+### PCA depending on Phylogroup
+
+```{r}
+#Phylogroup <- dput(as.character(clipr::read_clip()))
+Phylogroup <- c("A", "A", "F", "A", "B1", "A", "A", "B1", "B1", "A", "B1", "A", "B1", "B1", "A", "F", "B1", "B2", "D", "B1", "A", "B1", "B1", "A", "A", "B1", "A", "B1", "B1", "A", "A", "A", "A", "A", "A", "A", "A", "A", "D")
+
+plot(logsvd_model, type = "scores") + geom_point(aes(colour = Phylogroup)) +   ggtitle("Exponential Family PCA") + scale_colour_manual(values = c("green", "red", "purple", "yellow", "grey"))
+
+plot(logpca_model, type = "scores") + geom_point(aes(colour = Phylogroup)) +   ggtitle("Logistic PCA") + scale_colour_manual(values = c("green", "red", "purple", "yellow", "grey")) 
+```
+
+# Usefull stuff
+
+### merging two tables by their ID
+
+Let's suppose that we have two tables that contain the same unique IDs, this function is usefull to merge the two tables depending on these IDs even if the rows are not ordered. Here we merge two tables data1 and data2 by their ID names
+
+```{r, eval=FALSE}
+merge(x= data1, y=data2, by= "ID", all=TRUE)
+```
+
+### Replace all NA's with 0 in a dataframe
+
+Here we replace all the NAs in a data by zero, easy stuff
+
+```{r, eval=FALSE}
+data[is.na(data)] <- 0
+```
+
+### Calculate correlation for binary table
+
+Here i want to calculate the pearson's correlation coefficient between my different variables. By checking the bibliography, the cor() function should do the work. If there is a variable that takes the value 1 or 0 across all the population, we will see this Warning message : In cor(data) : the standard deviation is zero We can make a heatmap Based on that using the pheatmap package
+
+```{r, eval=FALSE}
+cor_data <- cor(data)
+library(pheatmap)
+cor_data[is.na(cor_data)] <- 0
+pheatmap::pheatmap(cor_data)
+```

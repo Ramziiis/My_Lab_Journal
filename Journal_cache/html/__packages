@@ -1,0 +1,17 @@
+reshape
+psych
+dplyr
+data.table
+ggplot2
+RSelenium
+tidyverse
+tibble
+tidyr
+readr
+purrr
+stringr
+forcats
+lubridate
+leaflet
+tmaptools
+logisticPCA

@@ -8,6 +8,4 @@ navbar:
       href: Journal.html
     - text: "Links"
       href: Links.html
-    - text: "Antibiotic Profile"
-      href: Profile_ATB.html
 output_dir: "docs"

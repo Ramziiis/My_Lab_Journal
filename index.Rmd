@@ -19,7 +19,9 @@ output: html_document
 
 # **My Lab Journal**
 
-This is a template example for lab journaling. Students in Matt Crump's Human Cognition and Performance Lab will use this template to learn R, and other things. Students can replace this text with more fun things. People not in my lab can use this too.
+This is my personal lab Journal. I keep here some of the R code that I used to generate some of the graphs during my research. I hope you find this usefull. Bash scripts for Genome analysis that I used will be published here soon. 
+
+This webpage was designed following the template of Matt Crump and it has been modified according to his guidelines as follow.  
 
 ## How to use
 
@@ -35,9 +37,9 @@ This is a template example for lab journaling. Students in Matt Crump's Human Co
 </div>
 <div class="col-sm-6">
 
-### [Crump Lab: Human Cognition and Performance](https://crumplab.github.io)
+### [Making our way through Data](https://github.com/Ramziiis)
 
-<a href = "https://crumplab.github.io">
-![](images/logo.png)
+<a href = "https://github.com/Ramziiis">
+![](images/DATA_animal.jpg)
 </a>
 </div>

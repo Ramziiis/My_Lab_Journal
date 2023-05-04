@@ -1,3 +1,5 @@
+  [![HitCount](https://hits.dwyl.com/Ramziiis/My_Lab_Journal.svg?style=flat-square)](http://hits.dwyl.com/Ramziiis/My_Lab_Journal)
+
 # LabJournalWebsite
 An R Markdown website template for a lab journal [https://crumplab.github.io/LabJournalWebsite/index.html](https://crumplab.github.io/LabJournalWebsite/index.html)
 
