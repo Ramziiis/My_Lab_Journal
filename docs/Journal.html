@@ -359,7 +359,7 @@ for the analysis of my data during my research, I hope You will find
 this Usefull. The problems and tasks may not be in a chronological order
 so feel free to surf the whole page in order to find what you’re looking
 for !</p>
-<p>Last compiled: 2023-05-04</p>
+<p>Last compiled: 2023-05-05</p>
 <div id="heatmap-for-antimicrobial-activity" class="section level1">
 <h1>Heatmap for Antimicrobial activity</h1>
 <div id="loading-the-necessary-packages" class="section level3">
@@ -492,12 +492,130 @@ ggplot(df_tm, aes(ATB, Strain)) + geom_tile(aes(fill = factor(value), colour = c
 <p><img src="Journal_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
 </div>
 </div>
+<div id="resistance-heatmap" class="section level1">
+<h1>Resistance Heatmap</h1>
+<div id="loading-the-necessary-packages-1" class="section level3">
+<h3>Loading the necessary packages</h3>
+<pre class="r"><code>library(reshape)
+library(psych)
+library(dplyr)
+library(data.table)
+library(ggplot2)
+library(RSelenium)
+library(ggplot2)</code></pre>
+</div>
+<div id="importing-and-transforming-data" class="section level3">
+<h3>Importing and transforming data</h3>
+<pre class="r"><code>R_Genes &lt;- read.csv(file = &quot;C:/Users/User/OneDrive - Université Laval/OMICS/Résistance_Analyse/R_Genes.csv&quot; )
+
+rownames(R_Genes) &lt;- R_Genes$gene
+
+R_Genes &lt;- subset(R_Genes, select = -c(1))
+
+R_Genes &lt;- subset(R_Genes, select=-c(which(colnames(R_Genes)==&quot;BC36_S40&quot;))) # Remove this sample
+
+R_Genes &lt;- subset(R_Genes, select=-c(which(colnames(R_Genes)==&quot;Kp405_S41&quot;))) # Remove this sample
+
+
+R_Genes_t &lt;- t(R_Genes)
+
+R_Genes_tm &lt;- reshape2::melt(R_Genes_t)
+
+colnames(R_Genes_tm) &lt;- c(&quot;strain&quot;,&quot;gene&quot;,&quot;value&quot;)
+
+p&lt;-ggplot(R_Genes_tm, aes(strain, gene)) + geom_tile(aes(fill = factor(value)), colour = &quot;black&quot;) + theme(legend.title=element_text(colour = &quot;black&quot;, size = 3), axis.text.x = element_text(angle = 90, hjust=1, size=9), axis.text.y = element_text(size = 3.5)) + labs(title=&quot;Resistomes&quot;, size = 100) + labs(x=&quot;Strains&quot;,y=&quot;Resistance genes and mutations&quot;) + labs(fill=&#39; &#39;, ) + scale_fill_manual(values=c(&quot;black&quot;, &quot;red&quot;, &quot;green&quot;), labels= c(&#39;Absence&#39;, &#39;strict hit&#39;, &#39;perfect hit&#39;))
+
+p #view plot</code></pre>
+<p><img src="Journal_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+</div>
+<div id="saving-the-plot" class="section level3">
+<h3>Saving the plot</h3>
+<pre class="r"><code>ggsave(p, path = &quot;C:/Users/User/OneDrive - Université Laval/Article Drafts/1st article Tables and Figures/&quot;, filename = &quot;heatmap.pdf&quot;)</code></pre>
+</div>
+<div id="changing-the-order-of-the-strains" class="section level3">
+<h3>Changing the order of the strains</h3>
+<p>We want to put a custom order before redrawing the graph</p>
+<pre class="r"><code>good_order &lt;- c(&quot;X1288_S1&quot;,&quot;X32_S2&quot;,&quot;X108_S3&quot;,&quot;X15_S4&quot;,&quot;X443_S5&quot;,&quot;X645_S6&quot;,&quot;X478_S7&quot;,&quot;X758_S8&quot;,&quot;X1082_S9&quot;,&quot;X685_S10&quot;,&quot;X858_S11&quot;,&quot;X945_S12&quot;,&quot;ET135_S13&quot;,&quot;X1068_S14&quot;,&quot;ET87_S15&quot;,&quot;X940_S16&quot;,&quot;ET172_S17&quot;,&quot;X199_S18&quot;,&quot;X966_S19&quot;,&quot;X680_S20&quot;,&quot;X942_S21&quot;,&quot;X854_S22&quot;,&quot;X756_S23&quot;,&quot;X123_S24&quot;,&quot;X207_S25&quot;,&quot;ET124_S26&quot;,&quot;X457_S27&quot;,&quot;X357_S28&quot;,&quot;ET176_S29&quot;,&quot;X445_S30&quot;,&quot;X105_S31&quot;,&quot;X43_S32&quot;,&quot;X629_S33&quot;,&quot;X257_S34&quot;,&quot;X1079_S35&quot;,&quot;X668_S36&quot;,&quot;X480_S37&quot;,&quot;X860_S38&quot;,&quot;X746_S39&quot;)
+
+p1&lt;-ggplot(R_Genes_tm, aes(x=factor(strain, levels = good_order ), gene)) + geom_tile(aes(fill = factor(value)), colour = &quot;black&quot;) + theme(legend.title=element_text(colour = &quot;black&quot;, size = 3), axis.text.x = element_text(angle = 90, hjust=1, size=9), axis.text.y = element_text(size = 3.5)) + labs(title=&quot;Resistomes&quot;, size = 100) + labs(x=&quot;Strains&quot;,y=&quot;Resistance genes and mutations&quot;) + labs(fill=&#39; &#39;, ) + scale_fill_manual(values=c(&quot;black&quot;, &quot;red&quot;, &quot;green&quot;), labels= c(&#39;Absence&#39;, &#39;strict hit&#39;, &#39;perfect hit&#39;))
+
+p1</code></pre>
+<p><img src="Journal_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+</div>
+</div>
+<div id="get-the-genotype-from-this-data" class="section level1">
+<h1>Get the genotype from this data</h1>
+<p>In the previous code we have been able to draw a heatmap of the
+strains. In the case that i want to have the Profile of each strain I
+have to proceed as following.</p>
+<div
+id="load-the-data-and-subset-the-antibiotic-resistance-profile-section"
+class="section level3">
+<h3>Load the data and subset the Antibiotic resistance profile
+section</h3>
+<pre class="r"><code>All_df &lt;- read.csv(file = &quot;C:/Users/User/OneDrive - Université Laval/OMICS/Paillasse/All_Data - Copy.csv&quot;) # This file contains most of the genomic data 
+which(colnames(All_df) == &quot;AM&quot;) # 306 </code></pre>
+<pre><code>## [1] 306</code></pre>
+<pre class="r"><code>which(colnames(All_df) == &quot;Col&quot;) #322</code></pre>
+<pre><code>## [1] 322</code></pre>
+<pre class="r"><code>antibiogram&lt;- subset(All_df, select = c(306:322)) # I took only the columns related the antibiotic resistance profile
+rownames(antibiogram) &lt;- All_df$gene # giving my rows relevant names
+antibiogram&lt;- t(antibiogram)
+antibiogram &lt;- antibiogram[, !colSums(is.na(antibiogram)), drop = FALSE]# remove columns that have NA in it
+antibiogram&lt;- t(antibiogram)</code></pre>
+</div>
+<div id="declaring-an-empty-dataframe-to-store-results"
+class="section level3">
+<h3>Declaring an empty Dataframe to store results</h3>
+<pre class="r"><code>return_final&lt;-data.frame()</code></pre>
+</div>
+<div id="design-a-for-loop" class="section level3">
+<h3>Design a for loop</h3>
+<p>For loop to read into matrix and then fill a new table with the
+resistance profile</p>
+<p>The following lines will :</p>
+<ol style="list-style-type: decimal">
+<li><p>Read the table line by line with a first for loop. each line
+(strain) will be assigned to a temporary table “tmp”.</p></li>
+<li><p>Subset only the columns (antibiotics) that have a value equal to
+1 (resistant phenotype) and assign it to another temporary table
+“tmp1”.</p></li>
+<li><p>Declare an empty string vector here called “profile”.</p></li>
+<li><p>Fill the empty vector with the column names of the table “tmp1”
+that contains only column names of antibiotics to which a strain is
+resistant.</p></li>
+<li><p>Fill a temporary table with the results.</p></li>
+<li><p>Bind all the temporary tables into a final results table</p></li>
+</ol>
+<pre class="r"><code>data &lt;- as.data.frame(antibiogram)
+for (i in row.names(data)) {        
+  tmp&lt;-data[c(i),]
+  tmp1 &lt;- subset(tmp, select = c(tmp==1))
+  nbr&lt;- print(length(tmp1))
+  profile&lt;-as.character(&quot; &quot;)
+  for (j in colnames(tmp1)){
+    profile&lt;- paste0(profile,&quot;/&quot;, print(j))
+  }
+  return_tmp &lt;- data.frame(&quot;Strain&quot; = i, &quot;profile&quot; = profile, &quot;Resistant to&quot; = nbr, stringsAsFactors = F)
+  return_final&lt;-rbind(return_final, return_tmp)
+}</code></pre>
+</div>
+<div id="view-the-results" class="section level3">
+<h3>View the Results</h3>
+<pre class="r"><code>view(return_final)</code></pre>
+</div>
+<div id="save-the-results-in-a-csv-table" class="section level3">
+<h3>Save the results in a csv table</h3>
+<p>In order to keep these results</p>
+<pre class="r"><code>write.csv(return_final, file = &quot;/Users/User/OneDrive - Université Laval/OMICS/Paillasse/Antibiogramme_profile.csv&quot; )</code></pre>
+</div>
+</div>
 <div id="description-for-a-table" class="section level1">
 <h1>Description for a table</h1>
 <pre class="r"><code>table &lt;- describe(df)
 view(table)
 ggplot(table, aes(x=vars, y=mean)) + geom_bar(stat = &#39;identity&#39;)</code></pre>
-<p><img src="Journal_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p><img src="Journal_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
 <p>#Mapping samples origins</p>
 <p>I want to show where my samples come from on a map</p>
 <div id="load-necessary-packages" class="section level3">
@@ -526,8 +644,8 @@ m &lt;- leaflet() %&gt;%
   addProviderTiles(providers$Stamen.TonerLines,
     options = providerTileOptions(opacity = 0.35)) %&gt;%
   addProviderTiles(providers$Stamen.TonerLabels)</code></pre>
-<div class="leaflet html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-1a74e902f3a1cd4d142a" style="width:672px;height:480px;"></div>
-<script type="application/json" data-for="htmlwidget-1a74e902f3a1cd4d142a">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false}]},{"method":"addMarkers","args":[[36.4512897,35.4162835,36.79515,35.461005,35.9606191,36.5044991,36.5984231,35.9715323,36.494946,35.60547975,36.705375,36.7769937,34.7232387,34.5218412,34.9693859,36.8108651,36.7624363,36.8790882,36.8002068,36.80647135,37.2720905,36.705375,36.852609,36.79515,36.74623035,36.3319504,34.7267806,36.705375,35.3409383,36.82794,36.79515,35.35660215,36.8002068,36.7989826,36.8391913,35.8156262,34.7267589,36.77393155,36.8597626],[10.7355915,10.9987172,10.1515887182475,10.7091095,10.4821146467179,10.6766828,10.4990402,9.3577128756367,8.776369,10.7876947685139,10.2982458529412,10.1091852321074,10.3358474256388,10.4984421,10.3738282683642,9.95370955407237,9.83361907826277,10.327678,10.1857757,10.1641321520558,9.8708565,10.2982458529412,10.2659363,10.1515887182475,9.20323283692005,10.0452999718776,10.1014808309275,10.2982458529412,10.6041957116899,10.1379805,10.1515887182475,10.9950036791662,10.1857757,10.160708,10.1170373,10.6237346,10.5449929079157,8.68725904255169,10.1914604],{"iconUrl":{"data":"https://fanblairfarm.co.uk/wp-content/uploads/2020/11/chicken-icon-2.png","index":0},"iconWidth":17,"iconHeight":17},null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},null,null,null,null,["Nabeul","ksour essef","mellassine","bou merdes","sidi bou ali","kemicha","grombalia","Gouvernorat Siliana","Jandouba","Gouvernorat Monastir","Chela","Sijoumi","Sfax","Mahres","Stade Municipal Menzel Chaker","El Habibia","Manouba","La Marsa","تونس العاصمة","Municipalité De Beb Lakwes","Bizerte","Chela","El Aouina","mellassine","Gouvernorat Béja","Zaghouan","Bir Ali Ben Khalifa","Chela","Gouvernorat Mahdia","Hayy Ibn Khaldun","mellassine","Délégation Ksour Essef","تونس العاصمة","Rue Ibn Charaf","Intilaka","Rue Touhami Amar","Agareb","Aïn Draham","Rue Beb Jdid"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addProviderTiles","args":["MtbMap",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addProviderTiles","args":["Stamen.TonerLines",null,null,{"errorTileUrl":"","noWrap":false,"opacity":0.35,"detectRetina":false}]},{"method":"addProviderTiles","args":["Stamen.TonerLabels",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]}],"limits":{"lat":[34.5218412,37.2720905],"lng":[8.68725904255169,10.9987172]}},"evals":[],"jsHooks":[]}</script>
+<div class="leaflet html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-45aabe3362cb400e2a9b" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-45aabe3362cb400e2a9b">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false}]},{"method":"addMarkers","args":[[36.4512897,35.4162835,36.79515,35.461005,35.9606191,36.5044991,36.5984231,35.9715323,36.494946,35.60547975,36.705375,36.7769937,34.7232387,34.5218412,34.9693859,36.8108651,36.7624363,36.8790882,36.8002068,36.80647135,37.2720905,36.705375,36.852609,36.79515,36.74623035,36.3319504,34.7267806,36.705375,35.3409383,36.82794,36.79515,35.35660215,36.8002068,36.7989826,36.8391913,35.8156262,34.7267589,36.77393155,36.8597626],[10.7355915,10.9987172,10.1515887182475,10.7091095,10.4821146467179,10.6766828,10.4990402,9.3577128756367,8.776369,10.7876947685139,10.2982458529412,10.1091852321074,10.3358474256388,10.4984421,10.3738282683642,9.95370955407237,9.83361907826277,10.327678,10.1857757,10.1641321520558,9.8708565,10.2982458529412,10.2659363,10.1515887182475,9.20323283692005,10.0452999718776,10.1014808309275,10.2982458529412,10.6041957116899,10.1379805,10.1515887182475,10.9950036791662,10.1857757,10.160708,10.1170373,10.6237346,10.5449929079157,8.68725904255169,10.1914604],{"iconUrl":{"data":"https://fanblairfarm.co.uk/wp-content/uploads/2020/11/chicken-icon-2.png","index":0},"iconWidth":17,"iconHeight":17},null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},null,null,null,null,["Nabeul","ksour essef","mellassine","bou merdes","sidi bou ali","kemicha","grombalia","Gouvernorat Siliana","Jandouba","Gouvernorat Monastir","Chela","Sijoumi","Sfax","Mahres","Stade Municipal Menzel Chaker","El Habibia","Manouba","La Marsa","تونس العاصمة","Municipalité De Beb Lakwes","Bizerte","Chela","El Aouina","mellassine","Gouvernorat Béja","Zaghouan","Bir Ali Ben Khalifa","Chela","Gouvernorat Mahdia","Hayy Ibn Khaldun","mellassine","Délégation Ksour Essef","تونس العاصمة","Rue Ibn Charaf","Intilaka","Rue Touhami Amar","Agareb","Aïn Draham","Rue Beb Jdid"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addProviderTiles","args":["MtbMap",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addProviderTiles","args":["Stamen.TonerLines",null,null,{"errorTileUrl":"","noWrap":false,"opacity":0.35,"detectRetina":false}]},{"method":"addProviderTiles","args":["Stamen.TonerLabels",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]}],"limits":{"lat":[34.5218412,37.2720905],"lng":[8.68725904255169,10.9987172]}},"evals":[],"jsHooks":[]}</script>
 </div>
 <div id="best-map-until-now" class="section level3">
 <h3>Best map until now</h3>
@@ -537,8 +655,8 @@ m &lt;- leaflet() %&gt;%
     addTiles(urlTemplate = &quot;https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png&quot;) %&gt;%    addMarkers(query$lon, query$lat, label = query$query,  icon = makeIcon(iconUrl =&quot;https://www.downloadclipart.net/large/chicken-png-transparent-image.png&quot;, iconWidth = 17, iconHeight= 17)) 
 
 m %&gt;% addProviderTiles(providers$Stamen.TonerLite) #best map until now</code></pre>
-<div class="leaflet html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-aebbd580eef43866c8aa" style="width:672px;height:480px;"></div>
-<script type="application/json" data-for="htmlwidget-aebbd580eef43866c8aa">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false}]},{"method":"addMarkers","args":[[36.4512897,35.4162835,36.79515,35.461005,35.9606191,36.5044991,36.5984231,35.9715323,36.494946,35.60547975,36.705375,36.7769937,34.7232387,34.5218412,34.9693859,36.8108651,36.7624363,36.8790882,36.8002068,36.80647135,37.2720905,36.705375,36.852609,36.79515,36.74623035,36.3319504,34.7267806,36.705375,35.3409383,36.82794,36.79515,35.35660215,36.8002068,36.7989826,36.8391913,35.8156262,34.7267589,36.77393155,36.8597626],[10.7355915,10.9987172,10.1515887182475,10.7091095,10.4821146467179,10.6766828,10.4990402,9.3577128756367,8.776369,10.7876947685139,10.2982458529412,10.1091852321074,10.3358474256388,10.4984421,10.3738282683642,9.95370955407237,9.83361907826277,10.327678,10.1857757,10.1641321520558,9.8708565,10.2982458529412,10.2659363,10.1515887182475,9.20323283692005,10.0452999718776,10.1014808309275,10.2982458529412,10.6041957116899,10.1379805,10.1515887182475,10.9950036791662,10.1857757,10.160708,10.1170373,10.6237346,10.5449929079157,8.68725904255169,10.1914604],{"iconUrl":{"data":"https://www.downloadclipart.net/large/chicken-png-transparent-image.png","index":0},"iconWidth":17,"iconHeight":17},null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},null,null,null,null,["Nabeul","ksour essef","mellassine","bou merdes","sidi bou ali","kemicha","grombalia","Gouvernorat Siliana","Jandouba","Gouvernorat Monastir","Chela","Sijoumi","Sfax","Mahres","Stade Municipal Menzel Chaker","El Habibia","Manouba","La Marsa","تونس العاصمة","Municipalité De Beb Lakwes","Bizerte","Chela","El Aouina","mellassine","Gouvernorat Béja","Zaghouan","Bir Ali Ben Khalifa","Chela","Gouvernorat Mahdia","Hayy Ibn Khaldun","mellassine","Délégation Ksour Essef","تونس العاصمة","Rue Ibn Charaf","Intilaka","Rue Touhami Amar","Agareb","Aïn Draham","Rue Beb Jdid"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addProviderTiles","args":["Stamen.TonerLite",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]}],"limits":{"lat":[34.5218412,37.2720905],"lng":[8.68725904255169,10.9987172]}},"evals":[],"jsHooks":[]}</script>
+<div class="leaflet html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-6534a8d720ce74e247fd" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-6534a8d720ce74e247fd">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false}]},{"method":"addMarkers","args":[[36.4512897,35.4162835,36.79515,35.461005,35.9606191,36.5044991,36.5984231,35.9715323,36.494946,35.60547975,36.705375,36.7769937,34.7232387,34.5218412,34.9693859,36.8108651,36.7624363,36.8790882,36.8002068,36.80647135,37.2720905,36.705375,36.852609,36.79515,36.74623035,36.3319504,34.7267806,36.705375,35.3409383,36.82794,36.79515,35.35660215,36.8002068,36.7989826,36.8391913,35.8156262,34.7267589,36.77393155,36.8597626],[10.7355915,10.9987172,10.1515887182475,10.7091095,10.4821146467179,10.6766828,10.4990402,9.3577128756367,8.776369,10.7876947685139,10.2982458529412,10.1091852321074,10.3358474256388,10.4984421,10.3738282683642,9.95370955407237,9.83361907826277,10.327678,10.1857757,10.1641321520558,9.8708565,10.2982458529412,10.2659363,10.1515887182475,9.20323283692005,10.0452999718776,10.1014808309275,10.2982458529412,10.6041957116899,10.1379805,10.1515887182475,10.9950036791662,10.1857757,10.160708,10.1170373,10.6237346,10.5449929079157,8.68725904255169,10.1914604],{"iconUrl":{"data":"https://www.downloadclipart.net/large/chicken-png-transparent-image.png","index":0},"iconWidth":17,"iconHeight":17},null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},null,null,null,null,["Nabeul","ksour essef","mellassine","bou merdes","sidi bou ali","kemicha","grombalia","Gouvernorat Siliana","Jandouba","Gouvernorat Monastir","Chela","Sijoumi","Sfax","Mahres","Stade Municipal Menzel Chaker","El Habibia","Manouba","La Marsa","تونس العاصمة","Municipalité De Beb Lakwes","Bizerte","Chela","El Aouina","mellassine","Gouvernorat Béja","Zaghouan","Bir Ali Ben Khalifa","Chela","Gouvernorat Mahdia","Hayy Ibn Khaldun","mellassine","Délégation Ksour Essef","تونس العاصمة","Rue Ibn Charaf","Intilaka","Rue Touhami Amar","Agareb","Aïn Draham","Rue Beb Jdid"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addProviderTiles","args":["Stamen.TonerLite",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]}],"limits":{"lat":[34.5218412,37.2720905],"lng":[8.68725904255169,10.9987172]}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 <div id="make-pca-for-my-data" class="section level1">
@@ -568,16 +686,16 @@ logsvd_model</code></pre>
 ## 470 iterations to converge</code></pre>
 <pre class="r"><code>logpca_cv = cv.lpca(data, ks = 2, ms = 1:10)
 plot(logpca_cv)</code></pre>
-<p><img src="Journal_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p><img src="Journal_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
 <pre class="r"><code>logpca_model = logisticPCA(data, k = 2, m = which.min(logpca_cv))
 plot(logsvd_model, type = &quot;trace&quot;)</code></pre>
-<p><img src="Journal_files/figure-html/unnamed-chunk-18-2.png" width="672" /></p>
+<p><img src="Journal_files/figure-html/unnamed-chunk-27-2.png" width="672" /></p>
 <pre class="r"><code>Activity&lt;- rownames(data)
 plot(logpca_model, type = &quot;scores&quot;) + geom_point(aes(colour = Activity)) + 
   ggtitle(&quot;Logistic PCA&quot;) + scale_colour_manual(values = c(&quot;blue&quot;, &quot;red&quot;)) </code></pre>
-<p><img src="Journal_files/figure-html/unnamed-chunk-18-3.png" width="672" /></p>
+<p><img src="Journal_files/figure-html/unnamed-chunk-27-3.png" width="672" /></p>
 <pre class="r"><code>plot(logsvd_model, type = &quot;scores&quot;) + geom_point(aes(colour = Activity)) +   ggtitle(&quot;Exponential Family PCA&quot;) + scale_colour_manual(values = c(&quot;blue&quot;, &quot;red&quot;))</code></pre>
-<p><img src="Journal_files/figure-html/unnamed-chunk-18-4.png" width="672" /></p>
+<p><img src="Journal_files/figure-html/unnamed-chunk-27-4.png" width="672" /></p>
 </div>
 <div
 id="pca-coloration-depending-on-the-criteria-of-bacteriocin-production"
@@ -594,10 +712,12 @@ Mcc[Mcc!=&quot;Non-producer&quot;] &lt;- &quot;Bacteriocin producer&quot;
 
 
 plot(logsvd_model, type = &quot;scores&quot;) + geom_point(aes(colour = Mcc)) + 
-  ggtitle(&quot;Exponential Family PCA&quot;) + scale_colour_manual(values = c(&quot;green&quot;, &quot;red&quot;))</code></pre>
-<p><img src="Journal_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
-<pre class="r"><code>plot(logpca_model, type = &quot;scores&quot;) + geom_point(aes(colour = Mcc)) +   ggtitle(&quot;Logistic PCA&quot;) + scale_colour_manual(values = c(&quot;green&quot;, &quot;red&quot;)) </code></pre>
-<p><img src="Journal_files/figure-html/unnamed-chunk-19-2.png" width="672" /></p>
+  ggtitle(&quot;Exponential Family PCA&quot;) + scale_colour_manual(values = c(&quot;blue&quot;, &quot;orange&quot;))</code></pre>
+<p><img src="Journal_files/figure-html/unnamed-chunk-28-1.png" width="672" /></p>
+<pre class="r"><code>p1 &lt;- plot(logpca_model, type = &quot;scores&quot;) + geom_point(aes(colour = Mcc)) +   ggtitle(&quot;Logistic PCA&quot;) + scale_colour_manual(values = c(&quot;blue&quot;, &quot;orange&quot;)) 
+
+p1 #visualize the plot</code></pre>
+<p><img src="Journal_files/figure-html/unnamed-chunk-28-2.png" width="672" /></p>
 </div>
 <div id="pca-depending-on-the-degree-of-virulence"
 class="section level3">
@@ -610,10 +730,12 @@ Virulence&lt;- c(&quot;APEC potential&quot;, &quot;APEC&quot;, &quot;APEC potent
 
 plot(logsvd_model, type = &quot;scores&quot;) + geom_point(aes(colour = Virulence)) + 
   ggtitle(&quot;Exponential Family PCA&quot;) + scale_colour_manual(values = c(&quot;green&quot;, &quot;red&quot;, &quot;purple&quot;))</code></pre>
-<p><img src="Journal_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
-<pre class="r"><code>plot(logpca_model, type = &quot;scores&quot;) + geom_point(aes(colour = Virulence)) + 
-  ggtitle(&quot;Logistic PCA&quot;) + scale_colour_manual(values = c(&quot;green&quot;, &quot;red&quot;, &quot;purple&quot;)) </code></pre>
-<p><img src="Journal_files/figure-html/unnamed-chunk-20-2.png" width="672" /></p>
+<p><img src="Journal_files/figure-html/unnamed-chunk-29-1.png" width="672" /></p>
+<pre class="r"><code>p2 &lt;- plot(logpca_model, type = &quot;scores&quot;) + geom_point(aes(colour = Virulence)) + 
+  ggtitle(&quot;Logistic PCA&quot;) + scale_colour_manual(values = c(&quot;green&quot;, &quot;red&quot;, &quot;purple&quot;)) 
+
+p2 #visualize the plot </code></pre>
+<p><img src="Journal_files/figure-html/unnamed-chunk-29-2.png" width="672" /></p>
 </div>
 <div id="pca-depending-on-phylogroup" class="section level3">
 <h3>PCA depending on Phylogroup</h3>
@@ -621,9 +743,18 @@ plot(logsvd_model, type = &quot;scores&quot;) + geom_point(aes(colour = Virulenc
 Phylogroup &lt;- c(&quot;A&quot;, &quot;A&quot;, &quot;F&quot;, &quot;A&quot;, &quot;B1&quot;, &quot;A&quot;, &quot;A&quot;, &quot;B1&quot;, &quot;B1&quot;, &quot;A&quot;, &quot;B1&quot;, &quot;A&quot;, &quot;B1&quot;, &quot;B1&quot;, &quot;A&quot;, &quot;F&quot;, &quot;B1&quot;, &quot;B2&quot;, &quot;D&quot;, &quot;B1&quot;, &quot;A&quot;, &quot;B1&quot;, &quot;B1&quot;, &quot;A&quot;, &quot;A&quot;, &quot;B1&quot;, &quot;A&quot;, &quot;B1&quot;, &quot;B1&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;D&quot;)
 
 plot(logsvd_model, type = &quot;scores&quot;) + geom_point(aes(colour = Phylogroup)) +   ggtitle(&quot;Exponential Family PCA&quot;) + scale_colour_manual(values = c(&quot;green&quot;, &quot;red&quot;, &quot;purple&quot;, &quot;yellow&quot;, &quot;grey&quot;))</code></pre>
-<p><img src="Journal_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
-<pre class="r"><code>plot(logpca_model, type = &quot;scores&quot;) + geom_point(aes(colour = Phylogroup)) +   ggtitle(&quot;Logistic PCA&quot;) + scale_colour_manual(values = c(&quot;green&quot;, &quot;red&quot;, &quot;purple&quot;, &quot;yellow&quot;, &quot;grey&quot;)) </code></pre>
-<p><img src="Journal_files/figure-html/unnamed-chunk-21-2.png" width="672" /></p>
+<p><img src="Journal_files/figure-html/unnamed-chunk-30-1.png" width="672" /></p>
+<pre class="r"><code>p3 &lt;- plot(logpca_model, type = &quot;scores&quot;) + geom_point(aes(colour = Phylogroup)) +   ggtitle(&quot;Logistic PCA&quot;) + scale_colour_manual(values = c(&quot;green&quot;, &quot;red&quot;, &quot;purple&quot;, &quot;yellow&quot;, &quot;grey&quot;)) 
+
+p3 # visualize the plot</code></pre>
+<p><img src="Journal_files/figure-html/unnamed-chunk-30-2.png" width="672" /></p>
+<p>#Merging the plots</p>
+</div>
+<div id="loadin-the-patchwork-package" class="section level3">
+<h3>Loadin the Patchwork package</h3>
+<pre class="r"><code>library(patchwork)
+p1+p2+p3</code></pre>
+<p><img src="Journal_files/figure-html/unnamed-chunk-31-1.png" width="672" /></p>
 </div>
 </div>
 <div id="usefull-stuff" class="section level1">
@@ -653,6 +784,210 @@ on that using the pheatmap package</p>
 library(pheatmap)
 cor_data[is.na(cor_data)] &lt;- 0
 pheatmap::pheatmap(cor_data)</code></pre>
+</div>
+</div>
+<div id="plasmids" class="section level1">
+<h1>Plasmids</h1>
+<p>So I have a Table containing some presence/absence Data of some
+plasmids across my genomes.</p>
+<div id="import-data-1" class="section level3">
+<h3>Import Data</h3>
+<p>The First time that I worked with my data, i just used clipr package
+to get it from the clipboard, then i saved it to a file that i will read
+the second time.</p>
+<pre class="r"><code>#tb2 &lt;-clipr::read_clip_tbl(header=TRUE)
+
+#write.csv(tb2 , row.names = FALSE, file = &quot;C:/Users/User/OneDrive - Université Laval/OMICS/Paillasse/Plasmids_binary.csv&quot;)
+
+tb2 &lt;- read.csv(file = &quot;C:/Users/User/OneDrive - Université Laval/OMICS/Paillasse/Plasmids_binary.csv&quot;)</code></pre>
+</div>
+<div id="replace-nas" class="section level3">
+<h3>Replace NAs</h3>
+<p>It’s as easy as this</p>
+<pre class="r"><code>tb2[is.na(tb2)== TRUE]&lt;-0</code></pre>
+</div>
+</div>
+<div id="phylogenetic-tree" class="section level1">
+<h1>Phylogenetic Tree</h1>
+<div id="load-ape-package" class="section level3">
+<h3>Load ape Package</h3>
+<pre class="r"><code>library(ape)</code></pre>
+</div>
+<div id="import-newick-file" class="section level3">
+<h3>Import newick file</h3>
+<pre class="r"><code>mytree&lt;-read.tree(&quot;C:/Users/User/OneDrive - Université Laval/OMICS/Paillasse/tree.newick.txt&quot;)
+
+mytree$tip.label # to check the edge number of the APEC strain</code></pre>
+<pre><code>##  [1] &quot;Sample36&quot;                                                 
+##  [2] &quot;Sample34&quot;                                                 
+##  [3] &quot;Sample30&quot;                                                 
+##  [4] &quot;Sample35&quot;                                                 
+##  [5] &quot;Sample10&quot;                                                 
+##  [6] &quot;Sample7&quot;                                                  
+##  [7] &quot;Sample6&quot;                                                  
+##  [8] &quot;Sample2&quot;                                                  
+##  [9] &quot;Sample4&quot;                                                  
+## [10] &quot;Sample1&quot;                                                  
+## [11] &quot;Sample31&quot;                                                 
+## [12] &quot;Sample27&quot;                                                 
+## [13] &quot;Sample38&quot;                                                 
+## [14] &quot;Sample21&quot;                                                 
+## [15] &quot;Sample12&quot;                                                 
+## [16] &quot;Sample37&quot;                                                 
+## [17] &quot;Sample25&quot;                                                 
+## [18] &quot;Sample33&quot;                                                 
+## [19] &quot;Sample32&quot;                                                 
+## [20] &quot;Sample15&quot;                                                 
+## [21] &quot;Sample24&quot;                                                 
+## [22] &quot;Sample41&quot;                                                 
+## [23] &quot;NC_000913_3_Escherichia_coli_str_K_12_substr_MG1655_fixed&quot;
+## [24] &quot;Sample14&quot;                                                 
+## [25] &quot;Sample13&quot;                                                 
+## [26] &quot;Sample17&quot;                                                 
+## [27] &quot;Sample26&quot;                                                 
+## [28] &quot;Sample23&quot;                                                 
+## [29] &quot;Sample11&quot;                                                 
+## [30] &quot;Sample20&quot;                                                 
+## [31] &quot;Sample22&quot;                                                 
+## [32] &quot;Sample40&quot;                                                 
+## [33] &quot;NC_020163_1_Escherichia_coli_APEC_O78_fixed&quot;              
+## [34] &quot;NC_018658_1_Escherichia_coli_O104_H4_str_2011C_3493_fixed&quot;
+## [35] &quot;Sample9&quot;                                                  
+## [36] &quot;Sample29&quot;                                                 
+## [37] &quot;Sample5&quot;                                                  
+## [38] &quot;Sample28&quot;                                                 
+## [39] &quot;Sample8&quot;                                                  
+## [40] &quot;Sample18&quot;                                                 
+## [41] &quot;NC_017634_1_Escherichia_coli_O83_H1_str_NRG_857C_fixed&quot;   
+## [42] &quot;Sample3&quot;                                                  
+## [43] &quot;Sample16&quot;                                                 
+## [44] &quot;NC_011750_1_Escherichia_coli_IAI39_fixed&quot;                 
+## [45] &quot;Sample19&quot;                                                 
+## [46] &quot;CU928163_2_Escherichia_coli_UMN026_fixed&quot;                 
+## [47] &quot;Sample39&quot;                                                 
+## [48] &quot;NC_002695_2_Escherichia_coli_O157_H7_str_Sakai_fixed&quot;</code></pre>
+<pre class="r"><code>rerootTree&lt;- root(mytree, mytree$tip.label[33])
+
+rerootTree$tip.label </code></pre>
+<pre><code>##  [1] &quot;Sample36&quot;                                                 
+##  [2] &quot;Sample34&quot;                                                 
+##  [3] &quot;Sample30&quot;                                                 
+##  [4] &quot;Sample35&quot;                                                 
+##  [5] &quot;Sample10&quot;                                                 
+##  [6] &quot;Sample7&quot;                                                  
+##  [7] &quot;Sample6&quot;                                                  
+##  [8] &quot;Sample2&quot;                                                  
+##  [9] &quot;Sample4&quot;                                                  
+## [10] &quot;Sample1&quot;                                                  
+## [11] &quot;Sample31&quot;                                                 
+## [12] &quot;Sample27&quot;                                                 
+## [13] &quot;Sample38&quot;                                                 
+## [14] &quot;Sample21&quot;                                                 
+## [15] &quot;Sample12&quot;                                                 
+## [16] &quot;Sample37&quot;                                                 
+## [17] &quot;Sample25&quot;                                                 
+## [18] &quot;Sample33&quot;                                                 
+## [19] &quot;Sample32&quot;                                                 
+## [20] &quot;Sample15&quot;                                                 
+## [21] &quot;Sample24&quot;                                                 
+## [22] &quot;Sample41&quot;                                                 
+## [23] &quot;NC_000913_3_Escherichia_coli_str_K_12_substr_MG1655_fixed&quot;
+## [24] &quot;Sample14&quot;                                                 
+## [25] &quot;Sample13&quot;                                                 
+## [26] &quot;Sample17&quot;                                                 
+## [27] &quot;Sample26&quot;                                                 
+## [28] &quot;Sample23&quot;                                                 
+## [29] &quot;Sample11&quot;                                                 
+## [30] &quot;Sample20&quot;                                                 
+## [31] &quot;Sample22&quot;                                                 
+## [32] &quot;Sample40&quot;                                                 
+## [33] &quot;NC_020163_1_Escherichia_coli_APEC_O78_fixed&quot;              
+## [34] &quot;NC_018658_1_Escherichia_coli_O104_H4_str_2011C_3493_fixed&quot;
+## [35] &quot;Sample9&quot;                                                  
+## [36] &quot;Sample29&quot;                                                 
+## [37] &quot;Sample5&quot;                                                  
+## [38] &quot;Sample28&quot;                                                 
+## [39] &quot;Sample8&quot;                                                  
+## [40] &quot;Sample18&quot;                                                 
+## [41] &quot;NC_017634_1_Escherichia_coli_O83_H1_str_NRG_857C_fixed&quot;   
+## [42] &quot;Sample3&quot;                                                  
+## [43] &quot;Sample16&quot;                                                 
+## [44] &quot;NC_011750_1_Escherichia_coli_IAI39_fixed&quot;                 
+## [45] &quot;Sample19&quot;                                                 
+## [46] &quot;CU928163_2_Escherichia_coli_UMN026_fixed&quot;                 
+## [47] &quot;Sample39&quot;                                                 
+## [48] &quot;NC_002695_2_Escherichia_coli_O157_H7_str_Sakai_fixed&quot;</code></pre>
+<pre class="r"><code>plot(rerootTree)</code></pre>
+<p><img src="Journal_files/figure-html/unnamed-chunk-38-1.png" width="672" /></p>
+<pre class="r"><code>edgecol&lt;- vector()
+edgecol[1:41] = &quot;black&quot;
+
+tipcol&lt;- vector()
+tipcol[1:41] = &quot;black&quot;
+
+arbre &lt;- plot.phylo(rerootTree, &quot;tidy&quot;,  main= &quot;phylogenetic analysis based on Average nucleotide identity&quot;, edge.color =  edgecol, cex = 0.6 , tip.color = tipcol, use.edge.length = FALSE, x.lim = 90) </code></pre>
+<p><img src="Journal_files/figure-html/unnamed-chunk-38-2.png" width="672" /></p>
+</div>
+<div id="adding-labels-optionnal" class="section level3">
+<h3>Adding labels (optionnal)</h3>
+<pre class="r"><code>#edgelabels(font=0.5, cex=0.5) 
+#tiplabels(font=0.05, cex=0.5)</code></pre>
+</div>
+<div id="chi-square-test-on-binary-data" class="section level3">
+<h3>Chi Square test on binary data</h3>
+<p>credit goes to <a
+href="https://stackoverflow.com/questions/71666349/multiple-chi-square-tests-in-r"
+class="uri">https://stackoverflow.com/questions/71666349/multiple-chi-square-tests-in-r</a></p>
+<pre class="r"><code>data &lt;- read.csv(file = &quot;C:/Users/User/OneDrive - Université Laval/OMICS/Paillasse/All_Data - Copy.csv&quot;, stringsAsFactors = TRUE) # This file contains most of the genomic data 
+
+# Identify columns with only one level as a value
+cols_to_remove &lt;- sapply(data, function(x) length(unique(x)) == 1)
+
+#Remove columns with only one level as a value
+data &lt;- data[, !cols_to_remove]
+
+# Split the data into response (sample) and predictor (parameter) variables
+#response &lt;- data[,1]
+#predictors &lt;- data[,2:ncol(data)]
+
+#response &lt;- as.factor(response) #necesary for chisq.test to work
+
+# Use the chi-squared test to determine the association between each parameter
+chi_sq_test &lt;- data %&gt;% 
+    select(-gene) %&gt;% 
+    colnames() %&gt;% 
+    combn(2) %&gt;% 
+    t() %&gt;% 
+    as_tibble() %&gt;% 
+    rowwise %&gt;% 
+    mutate(chisq_test = list(
+        table(data[[V1]], data[[V2]]) %&gt;% chisq.test()
+    ),
+    chisq_pval = chisq_test$p.value
+    )
+
+# Sort the chi-squared test statistics in descending order to determine the most discriminatory parameters
+sorted_chi_sq_test &lt;- chi_sq_test[order(chi_sq_test$chisq_pval, decreasing = FALSE), ]
+
+# Identify the top 10 most discriminatory parameters
+top_10_params &lt;- head(sorted_chi_sq_test, 10)
+
+# Print the top 10 most discriminatory parameters
+print(top_10_params)</code></pre>
+<pre><code>## # A tibble: 10 × 4
+## # Rowwise: 
+##    V1        V2          chisq_test    chisq_pval
+##    &lt;chr&gt;     &lt;chr&gt;       &lt;list&gt;             &lt;dbl&gt;
+##  1 APH.6..Id APH.3....Ib &lt;htest&gt;    0.00000000316
+##  2 gspC      gspE        &lt;htest&gt;    0.00000000334
+##  3 gspC      gspF        &lt;htest&gt;    0.00000000334
+##  4 gspE      gspF        &lt;htest&gt;    0.00000000334
+##  5 gspH      gspI        &lt;htest&gt;    0.00000000349
+##  6 gspH      gspJ        &lt;htest&gt;    0.00000000349
+##  7 gspH      gspK        &lt;htest&gt;    0.00000000349
+##  8 gspI      gspJ        &lt;htest&gt;    0.00000000349
+##  9 gspI      gspK        &lt;htest&gt;    0.00000000349
+## 10 gspJ      gspK        &lt;htest&gt;    0.00000000349</code></pre>
 </div>
 </div>
 

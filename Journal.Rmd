@@ -159,6 +159,141 @@ df_tm$ATB <- factor(df_tm$ATB, levels = c("AM", "AMC", "FEP", "CTX", "FOX", "CAZ
 ggplot(df_tm, aes(ATB, Strain)) + geom_tile(aes(fill = factor(value), colour = c("red","green",white) ), colour = "white") + theme(legend.title=element_text(colour = "black", size = 12), axis.text.x = element_text(angle = 45, hjust=1, size=8)) + labs(title="Antibiotic resistance Profile", size = 15) + labs(x="Antibiotic",y="strain") + labs(fill='Phenotype') + scale_fill_manual(values=c("green","red", "red"), labels= c('Sensitive', 'Resistant', 'Resistant'))
 ```
 
+# Resistance Heatmap
+
+### Loading the necessary packages
+
+```{r}
+library(reshape)
+library(psych)
+library(dplyr)
+library(data.table)
+library(ggplot2)
+library(RSelenium)
+library(ggplot2)
+```
+
+### Importing and transforming data
+
+```{r}
+R_Genes <- read.csv(file = "C:/Users/User/OneDrive - Université Laval/OMICS/Résistance_Analyse/R_Genes.csv" )
+
+rownames(R_Genes) <- R_Genes$gene
+
+R_Genes <- subset(R_Genes, select = -c(1))
+
+R_Genes <- subset(R_Genes, select=-c(which(colnames(R_Genes)=="BC36_S40"))) # Remove this sample
+
+R_Genes <- subset(R_Genes, select=-c(which(colnames(R_Genes)=="Kp405_S41"))) # Remove this sample
+
+
+R_Genes_t <- t(R_Genes)
+
+R_Genes_tm <- reshape2::melt(R_Genes_t)
+
+colnames(R_Genes_tm) <- c("strain","gene","value")
+
+p<-ggplot(R_Genes_tm, aes(strain, gene)) + geom_tile(aes(fill = factor(value)), colour = "black") + theme(legend.title=element_text(colour = "black", size = 3), axis.text.x = element_text(angle = 90, hjust=1, size=9), axis.text.y = element_text(size = 3.5)) + labs(title="Resistomes", size = 100) + labs(x="Strains",y="Resistance genes and mutations") + labs(fill=' ', ) + scale_fill_manual(values=c("black", "red", "green"), labels= c('Absence', 'strict hit', 'perfect hit'))
+
+p #view plot
+
+```
+
+### Saving the plot
+
+```{r, eval=FALSE}
+
+ggsave(p, path = "C:/Users/User/OneDrive - Université Laval/Article Drafts/1st article Tables and Figures/", filename = "heatmap.pdf")
+
+
+```
+
+### Changing the order of the strains
+
+We want to put a custom order before redrawing the graph
+
+```{r}
+good_order <- c("X1288_S1","X32_S2","X108_S3","X15_S4","X443_S5","X645_S6","X478_S7","X758_S8","X1082_S9","X685_S10","X858_S11","X945_S12","ET135_S13","X1068_S14","ET87_S15","X940_S16","ET172_S17","X199_S18","X966_S19","X680_S20","X942_S21","X854_S22","X756_S23","X123_S24","X207_S25","ET124_S26","X457_S27","X357_S28","ET176_S29","X445_S30","X105_S31","X43_S32","X629_S33","X257_S34","X1079_S35","X668_S36","X480_S37","X860_S38","X746_S39")
+
+p1<-ggplot(R_Genes_tm, aes(x=factor(strain, levels = good_order ), gene)) + geom_tile(aes(fill = factor(value)), colour = "black") + theme(legend.title=element_text(colour = "black", size = 3), axis.text.x = element_text(angle = 90, hjust=1, size=9), axis.text.y = element_text(size = 3.5)) + labs(title="Resistomes", size = 100) + labs(x="Strains",y="Resistance genes and mutations") + labs(fill=' ', ) + scale_fill_manual(values=c("black", "red", "green"), labels= c('Absence', 'strict hit', 'perfect hit'))
+
+p1
+
+```
+
+# Get the genotype from this data
+
+In the previous code we have been able to draw a heatmap of the strains. In the case that i want to have the Profile of each strain I have to proceed as following.
+
+### Load the data and subset the Antibiotic resistance profile section
+
+```{r}
+All_df <- read.csv(file = "C:/Users/User/OneDrive - Université Laval/OMICS/Paillasse/All_Data - Copy.csv") # This file contains most of the genomic data 
+which(colnames(All_df) == "AM") # 306 
+which(colnames(All_df) == "Col") #322
+antibiogram<- subset(All_df, select = c(306:322)) # I took only the columns related the antibiotic resistance profile
+rownames(antibiogram) <- All_df$gene # giving my rows relevant names
+antibiogram<- t(antibiogram)
+antibiogram <- antibiogram[, !colSums(is.na(antibiogram)), drop = FALSE]# remove columns that have NA in it
+antibiogram<- t(antibiogram)
+
+```
+
+### Declaring an empty Dataframe to store results
+
+```{r}
+return_final<-data.frame()
+
+```
+
+### Design a for loop
+
+For loop to read into matrix and then fill a new table with the resistance profile
+
+The following lines will :
+
+1)  Read the table line by line with a first for loop. each line (strain) will be assigned to a temporary table "tmp".
+
+2)  Subset only the columns (antibiotics) that have a value equal to 1 (resistant phenotype) and assign it to another temporary table "tmp1".
+
+3)  Declare an empty string vector here called "profile".
+
+4)  Fill the empty vector with the column names of the table "tmp1" that contains only column names of antibiotics to which a strain is resistant.
+
+5)  Fill a temporary table with the results.
+
+6)  Bind all the temporary tables into a final results table
+
+```{r, echo=TRUE, results='hide'}
+data <- as.data.frame(antibiogram)
+for (i in row.names(data)) {        
+  tmp<-data[c(i),]
+  tmp1 <- subset(tmp, select = c(tmp==1))
+  nbr<- print(length(tmp1))
+  profile<-as.character(" ")
+  for (j in colnames(tmp1)){
+    profile<- paste0(profile,"/", print(j))
+  }
+  return_tmp <- data.frame("Strain" = i, "profile" = profile, "Resistant to" = nbr, stringsAsFactors = F)
+  return_final<-rbind(return_final, return_tmp)
+}
+
+```
+
+### View the Results
+
+```{r}
+view(return_final)
+```
+
+### Save the results in a csv table
+
+In order to keep these results
+
+```{r, eval=FALSE}
+write.csv(return_final, file = "/Users/User/OneDrive - Université Laval/OMICS/Paillasse/Antibiogramme_profile.csv" )
+```
+
 # Description for a table
 
 ```{r}
@@ -245,7 +380,8 @@ plot(logsvd_model, type = "trace")
 Activity<- rownames(data)
 plot(logpca_model, type = "scores") + geom_point(aes(colour = Activity)) + 
   ggtitle("Logistic PCA") + scale_colour_manual(values = c("blue", "red")) 
-  
+
+
 plot(logsvd_model, type = "scores") + geom_point(aes(colour = Activity)) +   ggtitle("Exponential Family PCA") + scale_colour_manual(values = c("blue", "red"))
 
 
@@ -262,9 +398,11 @@ Mcc[Mcc!="Non-producer"] <- "Bacteriocin producer"
 
 
 plot(logsvd_model, type = "scores") + geom_point(aes(colour = Mcc)) + 
-  ggtitle("Exponential Family PCA") + scale_colour_manual(values = c("green", "red"))
+  ggtitle("Exponential Family PCA") + scale_colour_manual(values = c("blue", "orange"))
 
-plot(logpca_model, type = "scores") + geom_point(aes(colour = Mcc)) +   ggtitle("Logistic PCA") + scale_colour_manual(values = c("green", "red")) 
+p1 <- plot(logpca_model, type = "scores") + geom_point(aes(colour = Mcc)) +   ggtitle("Logistic PCA") + scale_colour_manual(values = c("blue", "orange")) 
+
+p1 #visualize the plot
 ```
 
 ### PCA depending on the degree of Virulence
@@ -281,8 +419,10 @@ Virulence<- c("APEC potential", "APEC", "APEC potential", "APEC potential", "APE
 plot(logsvd_model, type = "scores") + geom_point(aes(colour = Virulence)) + 
   ggtitle("Exponential Family PCA") + scale_colour_manual(values = c("green", "red", "purple"))
 
-plot(logpca_model, type = "scores") + geom_point(aes(colour = Virulence)) + 
+p2 <- plot(logpca_model, type = "scores") + geom_point(aes(colour = Virulence)) + 
   ggtitle("Logistic PCA") + scale_colour_manual(values = c("green", "red", "purple")) 
+
+p2 #visualize the plot 
 ```
 
 ### PCA depending on Phylogroup
@@ -293,8 +433,22 @@ Phylogroup <- c("A", "A", "F", "A", "B1", "A", "A", "B1", "B1", "A", "B1", "A", 
 
 plot(logsvd_model, type = "scores") + geom_point(aes(colour = Phylogroup)) +   ggtitle("Exponential Family PCA") + scale_colour_manual(values = c("green", "red", "purple", "yellow", "grey"))
 
-plot(logpca_model, type = "scores") + geom_point(aes(colour = Phylogroup)) +   ggtitle("Logistic PCA") + scale_colour_manual(values = c("green", "red", "purple", "yellow", "grey")) 
+p3 <- plot(logpca_model, type = "scores") + geom_point(aes(colour = Phylogroup)) +   ggtitle("Logistic PCA") + scale_colour_manual(values = c("green", "red", "purple", "yellow", "grey")) 
+
+p3 # visualize the plot
 ```
+
+
+#Merging the plots
+
+### Loadin the Patchwork package
+
+```{r}
+library(patchwork)
+p1+p2+p3
+```
+
+
 
 # Usefull stuff
 
@@ -324,3 +478,117 @@ library(pheatmap)
 cor_data[is.na(cor_data)] <- 0
 pheatmap::pheatmap(cor_data)
 ```
+
+# Plasmids
+
+So I have a Table containing some presence/absence Data of some plasmids across my genomes.
+
+### Import Data
+
+The First time that I worked with my data, i just used clipr package to get it from the clipboard, then i saved it to a file that i will read the second time.
+
+```{r}
+#tb2 <-clipr::read_clip_tbl(header=TRUE)
+
+#write.csv(tb2 , row.names = FALSE, file = "C:/Users/User/OneDrive - Université Laval/OMICS/Paillasse/Plasmids_binary.csv")
+
+tb2 <- read.csv(file = "C:/Users/User/OneDrive - Université Laval/OMICS/Paillasse/Plasmids_binary.csv")
+
+```
+
+### Replace NAs
+
+It's as easy as this
+
+```{r}
+tb2[is.na(tb2)== TRUE]<-0
+
+```
+
+# Phylogenetic Tree
+
+### Load ape Package
+
+```{r}
+library(ape)
+
+```
+
+### Import newick file
+
+```{r}
+mytree<-read.tree("C:/Users/User/OneDrive - Université Laval/OMICS/Paillasse/tree.newick.txt")
+
+mytree$tip.label # to check the edge number of the APEC strain
+
+rerootTree<- root(mytree, mytree$tip.label[33])
+
+rerootTree$tip.label 
+
+plot(rerootTree)
+
+edgecol<- vector()
+edgecol[1:41] = "black"
+
+tipcol<- vector()
+tipcol[1:41] = "black"
+
+arbre <- plot.phylo(rerootTree, "tidy",  main= "phylogenetic analysis based on Average nucleotide identity", edge.color =  edgecol, cex = 0.6 , tip.color = tipcol, use.edge.length = FALSE, x.lim = 90) 
+
+
+```
+
+### Adding labels (optionnal)
+
+```{r}
+#edgelabels(font=0.5, cex=0.5) 
+#tiplabels(font=0.05, cex=0.5)
+
+```
+
+
+### Chi Square test on binary data
+credit goes to  https://stackoverflow.com/questions/71666349/multiple-chi-square-tests-in-r
+
+
+```{r}
+
+data <- read.csv(file = "C:/Users/User/OneDrive - Université Laval/OMICS/Paillasse/All_Data - Copy.csv", stringsAsFactors = TRUE) # This file contains most of the genomic data 
+
+# Identify columns with only one level as a value
+cols_to_remove <- sapply(data, function(x) length(unique(x)) == 1)
+
+#Remove columns with only one level as a value
+data <- data[, !cols_to_remove]
+
+# Split the data into response (sample) and predictor (parameter) variables
+#response <- data[,1]
+#predictors <- data[,2:ncol(data)]
+
+#response <- as.factor(response) #necesary for chisq.test to work
+
+# Use the chi-squared test to determine the association between each parameter
+chi_sq_test <- data %>% 
+    select(-gene) %>% 
+    colnames() %>% 
+    combn(2) %>% 
+    t() %>% 
+    as_tibble() %>% 
+    rowwise %>% 
+    mutate(chisq_test = list(
+        table(data[[V1]], data[[V2]]) %>% chisq.test()
+    ),
+    chisq_pval = chisq_test$p.value
+    )
+
+# Sort the chi-squared test statistics in descending order to determine the most discriminatory parameters
+sorted_chi_sq_test <- chi_sq_test[order(chi_sq_test$chisq_pval, decreasing = FALSE), ]
+
+# Identify the top 10 most discriminatory parameters
+top_10_params <- head(sorted_chi_sq_test, 10)
+
+# Print the top 10 most discriminatory parameters
+print(top_10_params)
+
+```
+
