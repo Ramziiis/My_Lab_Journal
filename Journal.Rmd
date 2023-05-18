@@ -592,3 +592,129 @@ print(top_10_params)
 
 ```
 
+
+### Download Data from NCBI
+Here I want to download data about all the prokaryotic genomes in NCBI.
+Use the option -O to name the output file.
+
+```{bash, eval =FALSE}
+
+cd /mnt/c/Users/User/OneDrive - Université Laval/OMICS/Ref 
+
+wget "https://ftp.ncbi.nlm.nih.gov/genomes/GENOME_REPORTS/prokaryotes.txt" -O prokaryotes_20230515.txt
+```
+
+Count number of Genomes of Escherichia coli
+
+```{bash, eval=FALSE}
+ grep -c "Escherichia coli" prokaryotes_20230515.txt
+```
+
+Create a file containing only Data about Escherichia coli
+
+```{bash, eval=FALSE}
+head -n 1 prokaryotes_20230515.txt  > Escherichia_coli_20230515.txt # first get the column names
+
+ grep "Escherichia coli" prokaryotes_20230515.txt >> Escherichia_coli_20230515.txt # get the lines that contain Escherichia coli and redirect it to the file that we just created
+```
+
+In that file, the column number 19 has the accession numbers, we can check that by typing this command
+
+```{bash, eval= FALSE}
+cut -f 19 -d "   " Escherichia_coli_20230515.txt | head -n 1
+```
+
+To get the metadata for these genomes, there is a special tool for that that makes it easy. We need to install it using conda as described here https://www.ncbi.nlm.nih.gov/datasets/docs/v1/download-and-install/
+
+Getting metadata for a genome assembly is as easy as this 
+
+```{bash, eval=FALSE}
+datasets summary genome accession GCA_024300685.1 > test_delete.json
+
+jq . test_delete.json | head --lines=10  # better visualize a json file 
+
+```
+
+for some reason This didnt work, so I ll just download one genome to try.
+
+```{bash, eval = FALSE}
+datasets download genome accession GCF_003018795.1 --filename testini.zip # download genome data package 
+dataformat tsv genome --inputfile testini/ncbi_dataset/data/assembly_data_report.jsonl 
+```
+
+With the previous code, I managed to download metadata with a forloop 
+
+```{bash, eval=FALSE}
+for accession in $(cut -f 19 -d "     " Escherichia_coli_20230515.txt  | tail -n+2); do echo $accession ; done
+
+```
+
+Create a folder, download data reports, unzip them, format the json reports of the genomes and redirect to the file metadata.tsv in parent directory, finish by deleting genome data fromn the download folder 
+
+```{bash, eval = FALSE}
+mkdir download && cd download && for accession in $(cut -f 19 -d "   " ../Escherichia_coli_20230515.txt  | tail -n+2); do echo "downloading data for $accession" && datasets download genome accession $accession --filename $accession.zip && unzip $accession.zip -d $accession && echo "extraction done" && dataformat tsv genome --inputfile ${accession}/ncbi_dataset/data/assembly_data_report.jsonl >> ../metadata.tsv && rm -r GCA* && echo "files removed" ; done cd ..
+
+```
+
+grep all the lines that contain unique accession numbers in the metadata, -t option for the sort command defines the delimitor 
+
+```{bash, eval=FALSE}
+head -n+1 metadata.tsv  > metadata_APEC.tsv
+
+grep APEC metadata.tsv | sort -t "    " -u -k 50,50 | sort -t "       " -u -k 21,21  >> metadata_APEC.tsv # the column 50 has the accession numbers and the column 21  has the project numbers 
+
+tail -n+2  metadata_APEC.tsv | wc -l # counting the number of strains from different projects, 17 APEC strains
+```
+
+Search for unique assemblies of commensal Escherichia coli strains isolated form Poultry
+
+```{bash, eval=FALSE}
+grep -i 'poultry\|broiler\|chicken' metadata.tsv | grep -i 'AFEC\|healthy\|commensal' | sort -t "     " -u -k 21,21  | sort -t "    " -u -k 50,50 | wc -l # there are 6 unique assemblies of commensal E. coli
+
+head -n+1 metadata.tsv  > metadata_6_AFEC.tsv
+
+
+grep -i 'poultry\|broiler\|chicken' metadata.tsv | grep -i 'AFEC\|healthy\|commensal' | sort -t "     " -u -k 21,21  | sort -t "    " -u -k 50,50 >> metadata_6_AFEC.tsv 
+
+```
+
+For the APEC, Im going to confirm their APEC status by local alignment using the 5 Predictor genes for APEC pathotype. 
+
+```{bash}
+conda activate abricate # activate environment 
+
+abricate --setupdb #after adding a fasta file to /path/to/abricate/db/database_name/sequences.fa
+
+cd download/
+
+conda activate ncbi_datasets
+ 
+for accession in $(tail -n+2 ../metadata_APEC.tsv | cut -f 50); do echo "Downloading data for $accession" && datasets download genome accession $accession --filename $accession.zip && unzip $accession.zip -d $accession && echo "extraction done"; done # Downloading data
+
+conda activate abricate
+
+for accession in $(tail -n+2 ../metadata_APEC.tsv | cut -f 50) ; do wc -l $accession/ncbi_dataset/data/$accession/${accession}*.fna ; done # Testing that th eloop works
+
+for accession in $(tail -n+2 ../metadata_APEC.tsv | cut -f 50) ; do abricate --db APEC $accession/ncbi_dataset/data/$accession/${accession}*.fna  >> ./APEC_blast_${accession}.tsv ; done
+
+
+abricate --summary ./APEC_blast_*.tsv  > ../APEC_blast_summary.tsv #make a table summary of this
+
+rm -fr *GCA*  # remove all the folders and files from the download folder
+```
+
+While visualizing the table, some of the Genomes that were reported as APEC, didnt contain all of the 5 predictor genes for the APEC pathotype. The following command line, shows the accession numbers of the strains that have all of the five predictor genes, depending on summary table generated by abricate
+
+```{bash, eval=FALSE}
+awk '$2==5' ../APEC_blast_summary.tsv | awk '{print $1}' | cat | sed 's/.\/APEC_blast_//g' | sed 's/.tsv//g'  # 9strains are confirmed APEC
+```
+
+get the metadata of the APEC confirmed strains
+```{bash, eval=FALSE}
+for accession in $(awk '$2==5' ../APEC_blast_summary.tsv | awk '{print $1}' | cat | sed 's/.\/APEC_blast_//g' | sed 's/.tsv//g'); do echo "$accession is an APEC strain"; done # Testing loop
+
+activate ncbi_datasets
+cd downloads/
+for accession in $(awk '$2==5' ../APEC_blast_summary.tsv | awk '{print $1}' | cat | sed 's/.\/APEC_blast_//g' | sed 's/.tsv//g'); do echo "downloading data for $accession" && datasets download genome accession $accession --filename $accession.zip && unzip $accession.zip -d $accession && echo "extraction done" && dataformat tsv genome --inputfile ${accession}/ncbi_dataset/data/assembly_data_report.jsonl >> ../metadata_APEC_confirmed.tsv && rm -r GCA* && echo "files removed" ; done && cd ..
+```
+
