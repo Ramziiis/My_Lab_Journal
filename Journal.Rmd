@@ -445,7 +445,7 @@ p3 # visualize the plot
 
 ```{r}
 library(patchwork)
-p1+p2+p3
+p1+p2
 ```
 
 
@@ -680,7 +680,7 @@ grep -i 'poultry\|broiler\|chicken' metadata.tsv | grep -i 'AFEC\|healthy\|comme
 
 For the APEC, Im going to confirm their APEC status by local alignment using the 5 Predictor genes for APEC pathotype. 
 
-```{bash}
+```{bash, eval=FALSE}
 conda activate abricate # activate environment 
 
 abricate --setupdb #after adding a fasta file to /path/to/abricate/db/database_name/sequences.fa
