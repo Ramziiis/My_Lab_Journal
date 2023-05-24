@@ -438,7 +438,6 @@ p3 <- plot(logpca_model, type = "scores") + geom_point(aes(colour = Phylogroup))
 p3 # visualize the plot
 ```
 
-
 #Merging the plots
 
 ### Loadin the Patchwork package
@@ -447,8 +446,6 @@ p3 # visualize the plot
 library(patchwork)
 p1+p2
 ```
-
-
 
 # Usefull stuff
 
@@ -546,10 +543,9 @@ arbre <- plot.phylo(rerootTree, "tidy",  main= "phylogenetic analysis based on A
 
 ```
 
-
 ### Chi Square test on binary data
-credit goes to  https://stackoverflow.com/questions/71666349/multiple-chi-square-tests-in-r
 
+credit goes to <https://stackoverflow.com/questions/71666349/multiple-chi-square-tests-in-r>
 
 ```{r}
 
@@ -592,10 +588,9 @@ print(top_10_params)
 
 ```
 
-
 ### Download Data from NCBI
-Here I want to download data about all the prokaryotic genomes in NCBI.
-Use the option -O to name the output file.
+
+Here I want to download data about all the prokaryotic genomes in NCBI. Use the option -O to name the output file.
 
 ```{bash, eval =FALSE}
 
@@ -624,9 +619,9 @@ In that file, the column number 19 has the accession numbers, we can check that 
 cut -f 19 -d "   " Escherichia_coli_20230515.txt | head -n 1
 ```
 
-To get the metadata for these genomes, there is a special tool for that that makes it easy. We need to install it using conda as described here https://www.ncbi.nlm.nih.gov/datasets/docs/v1/download-and-install/
+To get the metadata for these genomes, there is a special tool for that that makes it easy. We need to install it using conda as described here <https://www.ncbi.nlm.nih.gov/datasets/docs/v1/download-and-install/>
 
-Getting metadata for a genome assembly is as easy as this 
+Getting metadata for a genome assembly is as easy as this
 
 ```{bash, eval=FALSE}
 datasets summary genome accession GCA_024300685.1 > test_delete.json
@@ -642,21 +637,21 @@ datasets download genome accession GCF_003018795.1 --filename testini.zip # down
 dataformat tsv genome --inputfile testini/ncbi_dataset/data/assembly_data_report.jsonl 
 ```
 
-With the previous code, I managed to download metadata with a forloop 
+With the previous code, I managed to download metadata with a forloop
 
 ```{bash, eval=FALSE}
 for accession in $(cut -f 19 -d "     " Escherichia_coli_20230515.txt  | tail -n+2); do echo $accession ; done
 
 ```
 
-Create a folder, download data reports, unzip them, format the json reports of the genomes and redirect to the file metadata.tsv in parent directory, finish by deleting genome data fromn the download folder 
+Create a folder, download data reports, unzip them, format the json reports of the genomes and redirect to the file metadata.tsv in parent directory, finish by deleting genome data fromn the download folder
 
 ```{bash, eval = FALSE}
 mkdir download && cd download && for accession in $(cut -f 19 -d "   " ../Escherichia_coli_20230515.txt  | tail -n+2); do echo "downloading data for $accession" && datasets download genome accession $accession --filename $accession.zip && unzip $accession.zip -d $accession && echo "extraction done" && dataformat tsv genome --inputfile ${accession}/ncbi_dataset/data/assembly_data_report.jsonl >> ../metadata.tsv && rm -r GCA* && echo "files removed" ; done cd ..
 
 ```
 
-grep all the lines that contain unique accession numbers in the metadata, -t option for the sort command defines the delimitor 
+#### grep all the lines that contain unique accession numbers in the metadata, -t option for the sort command defines the delimitor
 
 ```{bash, eval=FALSE}
 head -n+1 metadata.tsv  > metadata_APEC.tsv
@@ -666,7 +661,7 @@ grep APEC metadata.tsv | sort -t "    " -u -k 50,50 | sort -t "       " -u -k 21
 tail -n+2  metadata_APEC.tsv | wc -l # counting the number of strains from different projects, 17 APEC strains
 ```
 
-Search for unique assemblies of commensal Escherichia coli strains isolated form Poultry
+### Search for unique assemblies of commensal Escherichia coli strains isolated form Poultry
 
 ```{bash, eval=FALSE}
 grep -i 'poultry\|broiler\|chicken' metadata.tsv | grep -i 'AFEC\|healthy\|commensal' | sort -t "     " -u -k 21,21  | sort -t "    " -u -k 50,50 | wc -l # there are 6 unique assemblies of commensal E. coli
@@ -678,7 +673,9 @@ grep -i 'poultry\|broiler\|chicken' metadata.tsv | grep -i 'AFEC\|healthy\|comme
 
 ```
 
-For the APEC, Im going to confirm their APEC status by local alignment using the 5 Predictor genes for APEC pathotype. 
+### Blast for APEC pathotype predictor genes
+
+For the APEC, Im going to confirm their APEC status by local alignment using the 5 Predictor genes for APEC pathotype.
 
 ```{bash, eval=FALSE}
 conda activate abricate # activate environment 
@@ -703,18 +700,129 @@ abricate --summary ./APEC_blast_*.tsv  > ../APEC_blast_summary.tsv #make a table
 rm -fr *GCA*  # remove all the folders and files from the download folder
 ```
 
+### Show accession numbers of the strains that contains all the 5 genes
+
 While visualizing the table, some of the Genomes that were reported as APEC, didnt contain all of the 5 predictor genes for the APEC pathotype. The following command line, shows the accession numbers of the strains that have all of the five predictor genes, depending on summary table generated by abricate
 
 ```{bash, eval=FALSE}
 awk '$2==5' ../APEC_blast_summary.tsv | awk '{print $1}' | cat | sed 's/.\/APEC_blast_//g' | sed 's/.tsv//g'  # 9strains are confirmed APEC
 ```
 
-get the metadata of the APEC confirmed strains
+### Get the metadata of the APEC confirmed strains
+
 ```{bash, eval=FALSE}
 for accession in $(awk '$2==5' ../APEC_blast_summary.tsv | awk '{print $1}' | cat | sed 's/.\/APEC_blast_//g' | sed 's/.tsv//g'); do echo "$accession is an APEC strain"; done # Testing loop
 
 activate ncbi_datasets
 cd downloads/
 for accession in $(awk '$2==5' ../APEC_blast_summary.tsv | awk '{print $1}' | cat | sed 's/.\/APEC_blast_//g' | sed 's/.tsv//g'); do echo "downloading data for $accession" && datasets download genome accession $accession --filename $accession.zip && unzip $accession.zip -d $accession && echo "extraction done" && dataformat tsv genome --inputfile ${accession}/ncbi_dataset/data/assembly_data_report.jsonl >> ../metadata_APEC_confirmed.tsv && rm -r GCA* && echo "files removed" ; done && cd ..
+```
+
+### Read Antibiogram from excell tables
+
+Read the tables, each table contains the inhibition diameters of a specific strain
+
+```{r}
+t1<- readxl::read_excel("E:/Share_Ubuntu_WGS/Antibiogram_05_2023/746.xlsx")
+t2<- readxl::read_excel("E:/Share_Ubuntu_WGS/Antibiogram_05_2023/756.xlsx")
+t3<- readxl::read_excel("E:/Share_Ubuntu_WGS/Antibiogram_05_2023/758.xlsx")
+t4<- readxl::read_excel("E:/Share_Ubuntu_WGS/Antibiogram_05_2023/357.xlsx")
+t5<- readxl::read_excel("E:/Share_Ubuntu_WGS/Antibiogram_05_2023/ET_135.xlsx")
+t6<- readxl::read_excel("E:/Share_Ubuntu_WGS/Antibiogram_05_2023/668.xlsx")
+```
+
+Only Keep the two first columns of each table
+
+```{r}
+t1 <- subset(t1, select = c(1,2))
+t2 <- subset(t2, select = c(1,2))
+t3 <- subset(t3, select = c(1,2))
+t4 <- subset(t4, select = c(1,2))
+t5 <- subset(t5, select = c(1,2))
+t6 <- subset(t6, select = c(1,2))
+```
+
+Change column names 
+
+```{r}
+colnames(t1)<- c("Antibiotic", "746_S39")
+colnames(t2)<- c("Antibiotic", "756_S23")
+colnames(t3)<- c("Antibiotic", "758_S8")
+colnames(t4)<- c("Antibiotic", "357_S28")
+colnames(t5)<- c("Antibiotic", "ET135_S13")
+colnames(t6)<- c("Antibiotic", "668_S36")
+```
+
+Merge Tables
+
+```{r}
+t <- merge(x= t1, y=t2, by= "Antibiotic", all=TRUE)
+t <- merge(x= t, y=t3, by= "Antibiotic", all=TRUE)
+t <- merge(x= t, y=t4, by= "Antibiotic", all=TRUE)
+t <- merge(x= t, y=t5, by= "Antibiotic", all=TRUE)
+t <- merge(x= t, y=t6, by= "Antibiotic", all=TRUE)
+```
+
+Add CLSI conditions
+
+```{r}
+rownames(t)<-t$Antibiotic
+t <- subset(t, select = c(-Antibiotic))
+
+data<-t
+
+#Copying the CLSI table 2020 for E. coli
+CLSI<-data.frame("Antibiotic"=c("AM", "AMC", "FEP", "CTX", "FOX", "CAZ", "ATM ", "IMP", "CIP", "NA", "SXT", "C", "TE", "GM", "K", "S"), "condition_1"=as.numeric(c("13", "13", "18", "22", "14", "17", "17", "19", "21", "13", 
+"10", "12", "11", "12", "13", "11")), "condition_2"=as.numeric(c("17", "18", "25", "26", "18", "21", "21", "23", "26", "19", 
+"16", "18", "15", "15", "18", "15")))
+
+rownames(CLSI)<- CLSI$Antibiotic
+CLSI<-subset(CLSI, select = c(-1))
+  
+# Loop through each row in the dataset
+for (antibiotic_name in rownames(data)) {
+  # Extract the inhibition diameters for the current antibiotic
+  diameters <- data[antibiotic_name, ]
+  conditions <- CLSI[antibiotic_name, ]
+  
+  # Apply changes based on conditions
+  for (i in 1:length(diameters)) {
+    if (diameters[i]<=conditions[1]) {
+      diameters[i] <- "R"  # Modify the value as needed
+    } else if (diameters[i]>=conditions[2]) {
+      diameters[i] <- "S"  # Modify the value as needed
+    } else {
+      diameters[i] <- "I"
+    }
+  }
+  
+  
+  # Update the values in the dataset
+  data[antibiotic_name, ] <- diameters
+}
+
+# Print the updated dataset
+print(data)
+
+```
+
+
+
+Visualize
+
+```{r}
+t<-data
+
+t$ATB <- row.names(t) # creating "ATB" column, necessary for the melt() to work
+
+t_m <- reshape2::melt(t, id.vars = "ATB")			   #Reshape package
+
+colnames(t_m) <- c("ATB","Strain","value") # giving relevant names to the melted table
+
+#df_tm$ATB <- factor(df_tm$ATB, levels = c("AM", "AMC", "FEP", "CTX", "FOX", "CAZ", "ATM", "ETP", "CIP", "NA.", "SXT", "C", "TE", "GM", "K", "S", "Col"))
+
+levels(factor(t_m$value)) # this helps to assign the colours
+
+ggplot2::ggplot(t_m, aes(ATB, Strain)) + geom_tile(aes(fill = factor(value), colour = c("white","white","white") ), colour = "white") + theme(legend.title=element_text(colour = "black", size = 12), axis.text.x = element_text(angle = 45, hjust=1, size=8)) + labs(title="Antibiotic resistance Profile", size = 15) + labs(x="Antibiotic",y="strain") + labs(fill='Phenotype') + scale_fill_manual(values=c("orange","red", "green"), labels= c('Intermediate', 'Resistant', 'Sensitive'))
 ```
 
